@@ -65,6 +65,13 @@
             modules = [{
               packages = [ toolchain aoc-cli ];
               env.RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
+
+              scripts.load-day.exec = ''
+                cargo new --vcs none --name day_$1 --bin days/day_$1
+                pushd days/day_$1
+                  aoc download -y 2023 -d $1
+                popd
+              '';
             }];
           };
         });
