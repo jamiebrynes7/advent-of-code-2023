@@ -71,6 +71,7 @@
               scripts.load-day.exec = ''
                 cargo new --vcs none --name day_$1 --bin days/day_$1
                 pushd days/day_$1
+                  cargo add --path ../../lib/utils/
                   aoc download -y 2023 -d $1
                 popd
               '';
