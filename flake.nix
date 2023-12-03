@@ -44,6 +44,8 @@
               hash = "sha256-YozoYVXlBa7x0mBhs0Z2CImX47Yx5bltLzluM/UehdM=";
             };
 
+            nativeBuildInputs = [ pkgs.pkg-config ];
+
             # Need to include Apple's build dependencies only if we are on a darwin system
             buildInputs = if pkgs.stdenv.isDarwin then
               with pkgs.darwin.apple_sdk; [
@@ -52,7 +54,7 @@
                 frameworks.SystemConfiguration
               ]
             else
-              [ ];
+              [ pkgs.openssl ];
 
             cargoHash = "sha256-vSn24Stru0WjCBCkDd4oQnm65N2qTCcHVsX2nAZnV5Q=";
 
@@ -63,7 +65,7 @@
           default = devenv.lib.mkShell {
             inherit inputs pkgs;
             modules = [{
-              packages = [ toolchain aoc-cli ];
+              packages = [ toolchain aoc-cli pkgs.gcc ];
               env.RUST_SRC_PATH = "${toolchain}/lib/rustlib/src/rust/library";
 
               scripts.load-day.exec = ''
