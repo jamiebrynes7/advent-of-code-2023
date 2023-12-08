@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+pub mod grid;
+
 pub fn parse_lines<T, E>(data: &str) -> Result<Vec<T>, E>
 where
     T: FromStr<Err = E>,

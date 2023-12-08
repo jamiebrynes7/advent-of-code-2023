@@ -3,6 +3,8 @@ use std::{
     str::FromStr,
 };
 
+use utils::grid::*;
+
 fn main() {
     let input = include_str!("../input.txt");
     let schematic = Schematic::from_str(input).expect("Failed to parse input");
@@ -21,22 +23,23 @@ fn part2(schematic: &Schematic) {
     println!("Part 2 result: {result}");
 }
 
-struct Schematic(Vec<Vec<Repr>>);
+struct Schematic(Grid<Repr>);
 
 impl Schematic {
     fn find_gear_ratios(&self) -> Vec<u32> {
         let mut symbol_map = HashMap::new();
-        let mut collect_symbol = |symbols: &HashSet<(usize, usize)>, num: u32| {
+        let mut collect_symbol = |symbols: &HashSet<Coords>, num: u32| {
             for coords in symbols {
                 symbol_map.entry(*coords).or_insert(vec![]).push(num);
             }
         };
 
-        for (y, row) in self.0.iter().enumerate() {
+        for (y, row) in self.0.rows() {
             let mut current_num = 0;
             let mut adjacent_symbols = HashSet::new();
 
             for (x, repr) in row.iter().enumerate() {
+                let coords = Coords { x, y };
                 match repr {
                     Repr::Empty | Repr::Symbol => {
                         if current_num != 0 && !adjacent_symbols.is_empty() {
@@ -48,7 +51,7 @@ impl Schematic {
                     }
                     Repr::Number(n) => {
                         current_num = current_num * 10 + n;
-                        adjacent_symbols.extend(self.find_adjacent_symbol(x, y).into_iter());
+                        adjacent_symbols.extend(self.find_adjacent_symbol(coords).into_iter());
                     }
                 }
             }
@@ -68,11 +71,12 @@ impl Schematic {
     fn find_part_nums(&self) -> Vec<u32> {
         let mut nums = Vec::new();
 
-        for (y, row) in self.0.iter().enumerate() {
+        for (y, row) in self.0.rows() {
             let mut current_num = 0;
             let mut has_symbol = false;
 
             for (x, repr) in row.iter().enumerate() {
+                let coords = Coords { x, y };
                 match repr {
                     Repr::Empty | Repr::Symbol => {
                         if current_num != 0 && has_symbol {
@@ -84,7 +88,7 @@ impl Schematic {
                     }
                     Repr::Number(n) => {
                         current_num = current_num * 10 + n;
-                        has_symbol |= !self.find_adjacent_symbol(x, y).is_empty();
+                        has_symbol |= !self.find_adjacent_symbol(coords).is_empty();
                     }
                 }
             }
@@ -97,28 +101,13 @@ impl Schematic {
         nums
     }
 
-    fn find_adjacent_symbol(&self, x: usize, y: usize) -> Vec<(usize, usize)> {
+    fn find_adjacent_symbol(&self, coords: Coords) -> Vec<Coords> {
         let mut adjacent = vec![];
-        for dx in [-1isize, 0, 1] {
-            for dy in [-1isize, 0, 1] {
-                let x = x as isize + dx;
-                let y = y as isize + dy;
-
-                // Check if our values are out of bounds
-                if y < 0 || y >= self.0.len() as isize {
-                    continue;
-                }
-
-                if x < 0 || x >= self.0[y as usize].len() as isize {
-                    continue;
-                }
-
-                if let Repr::Symbol = self.0[y as usize][x as usize] {
-                    adjacent.push((y as usize, x as usize));
-                }
+        for possible in self.0.adjacent_coords(coords) {
+            if let Repr::Symbol = self.0[possible] {
+                adjacent.push(possible)
             }
         }
-
         adjacent
     }
 }
@@ -138,7 +127,7 @@ impl FromStr for Schematic {
             inner.push(row);
         }
 
-        Ok(Schematic(inner))
+        Ok(Schematic(Grid::new(inner)))
     }
 }
 
